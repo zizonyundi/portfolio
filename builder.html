@@ -100,6 +100,20 @@ html, body { height:100%; overflow:hidden; font-family:'Helvetica Neue',Helvetic
 /* Toast */
 .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bl); color:var(--wh); font-size:11px; letter-spacing:.06em; padding:10px 18px; border-radius:3px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:999; white-space:nowrap; }
 .toast.show { opacity:1; }
+
+/* Generate direction modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:1000; }
+.modal-overlay.show { display:flex; }
+.modal { width:420px; max-width:calc(100vw - 40px); max-height:calc(100vh - 40px); overflow-y:auto; background:var(--wh); border-radius:4px; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+.modal-hdr { padding:16px 20px; border-bottom:1px solid var(--bd); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--gr); }
+.modal-body { padding:20px; display:flex; flex-direction:column; gap:16px; }
+.gd-grp { display:flex; flex-direction:column; gap:7px; }
+.gd-lbl { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--gr); }
+.seg { display:flex; flex-wrap:wrap; gap:6px; }
+.seg-btn { font-family:inherit; font-size:11px; padding:6px 10px; border:1px solid var(--bd); background:transparent; color:var(--bl); cursor:pointer; border-radius:2px; transition:all .12s; }
+.seg-btn:hover { border-color:var(--bl); }
+.seg-btn.on { background:#5a3ef8; color:var(--wh); border-color:#5a3ef8; }
+.modal-actions { padding:14px 20px; border-top:1px solid var(--bd); display:flex; justify-content:flex-end; gap:8px; }
 </style>
 </head>
 <body>
@@ -143,6 +157,48 @@ html, body { height:100%; overflow:hidden; font-family:'Helvetica Neue',Helvetic
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Generate direction modal -->
+<div class="modal-overlay" id="genModal">
+  <div class="modal">
+    <div class="modal-hdr">Generate 방향 설정</div>
+    <div class="modal-body">
+      <div class="gd-grp">
+        <span class="gd-lbl">어투</span>
+        <div class="seg" data-grp="tone">
+          <button class="seg-btn" data-v="관찰자(1인칭 건조체)">관찰자(1인칭 건조체)</button>
+          <button class="seg-btn" data-v="3인칭">3인칭</button>
+          <button class="seg-btn" data-v="에세이">에세이</button>
+          <button class="seg-btn" data-v="인터뷰체">인터뷰체</button>
+        </div>
+      </div>
+      <div class="gd-grp">
+        <span class="gd-lbl">구조</span>
+        <div class="seg" data-grp="structure">
+          <button class="seg-btn" data-v="3막(맥락→접근→결과)">3막(맥락→접근→결과)</button>
+          <button class="seg-btn" data-v="비네트(장면별 단편)">비네트(장면별 단편)</button>
+          <button class="seg-btn" data-v="단일 흐름">단일 흐름</button>
+        </div>
+      </div>
+      <div class="gd-grp">
+        <span class="gd-lbl">길이</span>
+        <div class="seg" data-grp="length">
+          <button class="seg-btn" data-v="짧게">짧게</button>
+          <button class="seg-btn" data-v="중간">중간</button>
+          <button class="seg-btn" data-v="길게">길게</button>
+        </div>
+      </div>
+      <div class="gd-grp">
+        <span class="gd-lbl">방향 메모 — 이번 글에서 강조할 것</span>
+        <textarea class="f-ta" id="genNote" style="height:56px" placeholder="예) 밤 작업, 마감 직전 톤 강조"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="genCancel">Cancel</button>
+      <button class="btn btn-gen" id="genConfirm">&#10022; Generate</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const S = {
@@ -300,9 +356,10 @@ function renderEditor() {
 function renderImageList() {
   const p = S.projects[S.currentIdx];
   const d = getData(p);
+  const videoInList = d.video && S.editImages.some(img => img.file === d.video);
   document.getElementById('imgList').innerHTML =
     S.editImages.map((img, i) => cardHTML(img, i, p.base)).join('') +
-    (d.video
+    (d.video && !videoInList
       ? '<div class="vid-card"><div class="v-ico">&#9654;</div>' +
         '<span style="font-size:11px">' + esc(d.video) + '</span>' +
         '<span style="font-size:9px;color:#999;margin-left:6px">Full width</span></div>'
@@ -414,9 +471,45 @@ function pmr(k, v2) {
   return '<div class="pm-r"><span class="pm-k">' + k + '</span><span class="pm-v">' + esc(v2) + '</span></div>';
 }
 
-// ── Generate (one click, server does everything) ──────────────────
-document.getElementById('btnGenerate').addEventListener('click', async () => {
+// ── Generate: open direction panel first ───────────────────────────
+const S_GEN_DEFAULTS = { tone: '관찰자(1인칭 건조체)', structure: '단일 흐름', length: '중간' };
+S.genDirection = { ...S_GEN_DEFAULTS, note: '' };
+
+function paintGenSeg() {
+  document.querySelectorAll('#genModal .seg').forEach(seg => {
+    const grp = seg.dataset.grp;
+    seg.querySelectorAll('.seg-btn').forEach(btn =>
+      btn.classList.toggle('on', btn.dataset.v === S.genDirection[grp]));
+  });
+}
+
+document.querySelectorAll('#genModal .seg').forEach(seg => {
+  const grp = seg.dataset.grp;
+  seg.querySelectorAll('.seg-btn').forEach(btn =>
+    btn.addEventListener('click', () => {
+      S.genDirection[grp] = btn.dataset.v;
+      paintGenSeg();
+    }));
+});
+
+document.getElementById('btnGenerate').addEventListener('click', () => {
   if (S.currentIdx < 0) return;
+  document.getElementById('genNote').value = S.genDirection.note;
+  paintGenSeg();
+  document.getElementById('genModal').classList.add('show');
+});
+
+document.getElementById('genCancel').addEventListener('click', () => {
+  document.getElementById('genModal').classList.remove('show');
+});
+document.getElementById('genModal').addEventListener('click', e => {
+  if (e.target.id === 'genModal') document.getElementById('genModal').classList.remove('show');
+});
+
+document.getElementById('genConfirm').addEventListener('click', async () => {
+  S.genDirection.note = document.getElementById('genNote').value;
+  document.getElementById('genModal').classList.remove('show');
+
   const p   = S.projects[S.currentIdx];
   const btn = document.getElementById('btnGenerate');
   btn.textContent = 'Generating...';
@@ -425,7 +518,7 @@ document.getElementById('btnGenerate').addEventListener('click', async () => {
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ base: p.base, images: p.images.slice(0, 6) }),
+      body: JSON.stringify({ base: p.base, images: p.images.slice(0, 6), direction: S.genDirection }),
     });
     const j = await res.json();
     if (!j.ok) throw new Error(j.error);
