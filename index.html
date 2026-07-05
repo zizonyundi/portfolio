@@ -204,6 +204,20 @@ html, body {
 /* ── Custom cursor ── */
 body { cursor: none; }
 * { cursor: none !important; }
+#cur-question {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    font-family: 'Pretendard', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 64px;
+    font-weight: 400;
+    letter-spacing: -.02em;
+    line-height: 1;
+    color: var(--bl);
+    opacity: 0;
+    transition: opacity .15s;
+}
 .cursor-layer {
     width: 40px;
     height: 40px;
@@ -266,6 +280,7 @@ body { cursor: none; }
 <div class="cursor-layer" id="cur-design" style="background:#FFE500"></div>
 <div class="cursor-layer" id="cur-music"  style="background:#FF2D2D"></div>
 <div class="cursor-layer" id="cur-dj"     style="background:#0055FF"></div>
+<div id="cur-question">?</div>
 <div class="layout">
 
     <!-- ── BRAND DESIGNER 50% ── -->
@@ -875,13 +890,14 @@ function toggleSC(i) {
     ];
 
     const R = 20; // cursor radius
+    let questionMode = false;
 
     document.addEventListener('mousemove', e => {
         const mx = e.clientX, my = e.clientY;
         layers.forEach(({ el, col }) => {
             el.style.left    = mx + 'px';
             el.style.top     = my + 'px';
-            el.style.opacity = '1';
+            if (!questionMode) el.style.opacity = '1';
 
             // Convert column bounds into cursor-local coordinates
             const c = col.getBoundingClientRect();
@@ -894,6 +910,22 @@ function toggleSC(i) {
     });
     document.addEventListener('mouseleave', () =>
         layers.forEach(({ el }) => el.style.opacity = '0'));
+
+    const curQ = document.getElementById('cur-question');
+    const designLabel = document.getElementById('design-label');
+    designLabel.addEventListener('mouseenter', () => {
+        questionMode = true;
+        layers.forEach(({ el }) => el.style.opacity = '0');
+        curQ.style.opacity = '1';
+    });
+    designLabel.addEventListener('mouseleave', () => {
+        questionMode = false;
+        curQ.style.opacity = '0';
+    });
+    document.addEventListener('mousemove', e => {
+        curQ.style.left = e.clientX + 'px';
+        curQ.style.top  = e.clientY + 'px';
+    });
 })();
 
 // ════════════════════════════════════════════════════
