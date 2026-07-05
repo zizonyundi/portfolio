@@ -201,6 +201,21 @@ html, body {
 .m-track:hover .m-title { opacity: 1; }
 .m-track.playing .m-title { opacity: 1; }
 
+/* ── Custom cursor ── */
+body { cursor: none; }
+* { cursor: none !important; }
+.cursor-layer {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
 /* ── Mobile responsive ── */
 @media (max-width: 768px) {
     .layout {
@@ -248,6 +263,9 @@ html, body {
 </head>
 <body>
 
+<div class="cursor-layer" id="cur-design" style="background:#FFE500"></div>
+<div class="cursor-layer" id="cur-music"  style="background:#FF2D2D"></div>
+<div class="cursor-layer" id="cur-dj"     style="background:#0055FF"></div>
 <div class="layout">
 
     <!-- ── BRAND DESIGNER 50% ── -->
@@ -845,6 +863,38 @@ function toggleSC(i) {
         scCurrent = i;
     }
 }
+
+// ════════════════════════════════════════════════════
+// CUSTOM CURSOR
+// ════════════════════════════════════════════════════
+(function() {
+    const layers = [
+        { el: document.getElementById('cur-design'), col: document.querySelector('.col-design') },
+        { el: document.getElementById('cur-music'),  col: document.querySelector('.col-music')  },
+        { el: document.getElementById('cur-dj'),     col: document.querySelector('.col-dj')     },
+    ];
+
+    const R = 20; // cursor radius
+
+    document.addEventListener('mousemove', e => {
+        const mx = e.clientX, my = e.clientY;
+        layers.forEach(({ el, col }) => {
+            el.style.left    = mx + 'px';
+            el.style.top     = my + 'px';
+            el.style.opacity = '1';
+
+            // Convert column bounds into cursor-local coordinates
+            const c = col.getBoundingClientRect();
+            const t  = Math.max(0,      c.top    - (my - R));
+            const r  = Math.max(0, R*2 - Math.min(R*2, c.right  - (mx - R)));
+            const b  = Math.max(0, R*2 - Math.min(R*2, c.bottom - (my - R)));
+            const l  = Math.max(0,      c.left   - (mx - R));
+            el.style.clipPath = `inset(${t}px ${r}px ${b}px ${l}px)`;
+        });
+    });
+    document.addEventListener('mouseleave', () =>
+        layers.forEach(({ el }) => el.style.opacity = '0'));
+})();
 
 // ════════════════════════════════════════════════════
 // BOOT
