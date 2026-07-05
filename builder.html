@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio Builder v4</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bl:#111; --wh:#fff; --gr:#999; --lt:#f5f5f5; --bd:rgba(0,0,0,0.1); --gap:3px; }
+html, body { height:100%; overflow:hidden; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; background:var(--wh); color:var(--bl); -webkit-font-smoothing:antialiased; }
+
+.builder { display:grid; grid-template-columns:175px 400px 1fr; height:100vh; }
+
+/* LEFT */
+.b-left { display:flex; flex-direction:column; height:100vh; border-right:1px solid var(--bd); }
+.b-brand { padding:16px; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--gr); border-bottom:1px solid var(--bd); flex-shrink:0; }
+.proj-list { flex:1; overflow-y:auto; }
+.proj-list::-webkit-scrollbar { display:none; }
+.proj-item { padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--bd); font-size:11px; display:flex; align-items:center; gap:8px; transition:background .1s; }
+.proj-item:hover { background:var(--lt); }
+.proj-item.active { background:var(--bl); color:var(--wh); }
+.proj-item.dragging { opacity:.3; }
+.proj-item.drag-over { border-top:2px solid var(--bl); }
+.pi-hdl { font-size:13px; color:#ccc; cursor:grab; flex-shrink:0; margin-right:2px; }
+.proj-item.active .pi-hdl { color:rgba(255,255,255,.4); }
+.pi-num { font-size:9px; opacity:.5; letter-spacing:.08em; flex-shrink:0; }
+.pi-thumb { width:36px; height:36px; object-fit:cover; border-radius:2px; flex-shrink:0; background:var(--lt); display:block; }
+.b-left-foot { flex-shrink:0; padding:12px 16px; border-top:1px solid var(--bd); }
+.btn-new { font-family:inherit; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:7px 12px; border:1px solid var(--bd); background:transparent; color:var(--gr); cursor:pointer; border-radius:2px; width:100%; transition:all .15s; }
+.btn-new:hover { border-color:var(--bl); color:var(--bl); }
+
+/* CENTER */
+.b-center { display:flex; flex-direction:column; height:100vh; border-right:1px solid var(--bd); }
+.ph { padding:14px 20px; border-bottom:1px solid var(--bd); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.ph-label { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--gr); }
+.sdot { width:6px; height:6px; border-radius:50%; border:1.5px solid #ccc; flex-shrink:0; }
+.sdot.dirty { background:#f90; border-color:#f90; }
+.sdot.saved { background:#4c4; border-color:#4c4; }
+.c-scroll { flex:1; overflow-y:auto; }
+.c-scroll::-webkit-scrollbar { display:none; }
+.empty-msg { padding:48px 20px; color:var(--gr); font-size:12px; }
+
+.meta-sec { padding:16px 20px; border-bottom:1px solid var(--bd); display:flex; flex-direction:column; gap:7px; }
+.f-row { display:grid; grid-template-columns:68px 1fr; align-items:center; gap:8px; }
+.f-row.fc { grid-template-columns:1fr; gap:3px; }
+.f-lbl { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--gr); }
+.f-inp, .f-ta { font-family:inherit; font-size:12px; color:var(--bl); background:transparent; border:1px solid var(--bd); padding:5px 8px; border-radius:2px; outline:none; width:100%; }
+.f-inp:focus, .f-ta:focus { border-color:rgba(0,0,0,.35); }
+.f-ta { resize:none; height:64px; line-height:1.5; }
+
+.img-sec { padding:0; }
+.img-list-hdr { padding:10px 20px 8px; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--gr); }
+
+.img-card { display:flex; align-items:center; gap:9px; padding:5px 20px; border-top:1px solid var(--bd); cursor:grab; user-select:none; background:var(--wh); }
+.img-card:active { cursor:grabbing; }
+.img-card.dragging { opacity:.3; }
+.img-card.drag-over { border-top:2px solid var(--bl); background:var(--lt); }
+.c-hdl { font-size:14px; color:#ccc; flex-shrink:0; }
+.c-th { width:36px; height:28px; object-fit:cover; flex-shrink:0; background:var(--lt); display:block; }
+.c-inf { flex:1; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.c-nm { font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+.lbs { display:flex; gap:2px; flex-shrink:0; }
+.lb { font-family:inherit; font-size:10px; padding:3px 6px; border:1px solid var(--bd); background:transparent; color:var(--gr); cursor:pointer; border-radius:2px; transition:all .1s; }
+.lb:hover { border-color:var(--bl); color:var(--bl); }
+.lb.on { background:var(--bl); color:var(--wh); border-color:var(--bl); }
+
+.vid-card { display:flex; align-items:center; gap:9px; padding:5px 20px; border-top:1px solid var(--bd); }
+.v-ico { width:36px; height:28px; background:var(--bl); display:flex; align-items:center; justify-content:center; color:var(--wh); font-size:10px; flex-shrink:0; }
+
+.actions { padding:13px 20px; border-top:1px solid var(--bd); display:flex; gap:8px; flex-shrink:0; }
+.btn { font-family:inherit; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:7px 14px; border:1px solid var(--bd); background:transparent; color:var(--bl); cursor:pointer; border-radius:2px; transition:all .15s; }
+.btn:hover { background:var(--bl); color:var(--wh); border-color:var(--bl); }
+.btn:disabled { opacity:.4; cursor:default; pointer-events:none; }
+.btn-p { background:var(--bl); color:var(--wh); border-color:var(--bl); }
+.btn-p:hover { opacity:.65; }
+.btn-gen { background:#5a3ef8; color:var(--wh); border-color:#5a3ef8; }
+.btn-gen:hover { opacity:.75; background:#5a3ef8; color:var(--wh); }
+
+/* RIGHT: preview */
+.b-right { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+.p-scroll { flex:1; overflow-y:auto; }
+.p-scroll::-webkit-scrollbar { display:none; }
+.pg { display:flex; flex-wrap:wrap; gap:var(--gap); }
+.pi { overflow:hidden; }
+.pi img { display:block; width:100%; height:auto; }
+.pi.pf  { width:100%; }
+.pi.ph2 { width:calc(50% - 1.5px); }
+.pi.pt  { width:calc(33.333% - 2px); }
+.pi.pv  { width:100%; background:#000; }
+.pi.pv video { display:block; width:100%; height:auto; max-height:60vh; }
+.pd { padding:36px 28px 60px; border-top:1px solid var(--bd); margin-top:var(--gap); }
+.pd-top { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; margin-bottom:20px; }
+.pd-name { font-size:clamp(22px,3vw,40px); font-weight:300; letter-spacing:-.03em; line-height:1; }
+.pd-meta { display:flex; flex-direction:column; gap:8px; }
+.pm-r { display:flex; align-items:baseline; }
+.pm-k { font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--gr); min-width:68px; }
+.pm-v { font-size:11px; }
+.pd-body { font-size:12px; line-height:1.75; color:#555; max-width:440px; }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bl); color:var(--wh); font-size:11px; letter-spacing:.06em; padding:10px 18px; border-radius:3px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:999; white-space:nowrap; }
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="builder">
+
+  <!-- LEFT: project list -->
+  <aside class="b-left">
+    <div class="b-brand">Builder</div>
+    <div class="proj-list" id="projList">
+      <div class="empty-msg" style="padding:16px">Loading...</div>
+    </div>
+    <div class="b-left-foot" style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn-new" id="btnNew">+ New Project</button>
+      <button class="btn-new" id="btnPublishLeft" style="background:var(--bl);color:var(--wh);border-color:var(--bl)">Publish</button>
+    </div>
+  </aside>
+
+  <!-- CENTER: editor -->
+  <section class="b-center">
+    <div class="ph">
+      <span class="ph-label" id="cLabel">Editor</span>
+      <span class="sdot" id="sdot"></span>
+    </div>
+    <div class="c-scroll" id="cScroll">
+      <div class="empty-msg">← 프로젝트를 선택하세요</div>
+    </div>
+    <div class="actions" id="actions" style="display:none">
+      <button class="btn btn-gen" id="btnGenerate">&#10022; Generate</button>
+      <button class="btn" id="btnSave">Save</button>
+      <button class="btn btn-p" id="btnPublish">Publish</button>
+    </div>
+  </section>
+
+  <!-- RIGHT: preview -->
+  <aside class="b-right">
+    <div class="ph"><span class="ph-label">Preview</span></div>
+    <div class="p-scroll" id="pScroll"></div>
+  </aside>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const S = {
+  currentIdx: -1,
+  dirty: false,
+  projects: [],
+  editImages: [],
+};
+let dragSrc = null;
+
+// ── Boot: load projects from server ───────────────────────────────
+async function loadProjects() {
+  try {
+    const res = await fetch('/api/projects');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    S.projects = await res.json();
+    renderList();
+  } catch (e) {
+    document.getElementById('projList').innerHTML =
+      '<div class="empty-msg" style="padding:16px;color:#c33">서버에 연결할 수 없어요.<br><br>' +
+      '터미널에서:<br><code style="font-size:10px">python3 server.py</code></div>';
+  }
+}
+
+// ── Left panel ─────────────────────────────────────────────────────
+let listDragSrc = null;
+
+function renderList() {
+  if (!S.projects.length) {
+    document.getElementById('projList').innerHTML =
+      '<div class="empty-msg" style="padding:16px">프로젝트 없음</div>';
+    return;
+  }
+  document.getElementById('projList').innerHTML = S.projects.map((p, i) => {
+    const title = (p.saved && p.saved.title) || p.defaultTitle;
+    const firstMedia = [...(p.images || []), ...(p.videos || [])].sort()[0] || '';
+    const thumbSrc = (p.saved && p.saved.thumb) || (firstMedia ? p.base + firstMedia : '');
+    const isVid = /\.(mp4|mov|webm)$/i.test(thumbSrc);
+    const thumbEl = thumbSrc
+      ? (isVid
+          ? '<video class="pi-thumb" src="' + thumbSrc + '" muted preload="auto" playsinline></video>'
+          : '<img class="pi-thumb" src="' + thumbSrc + '" loading="lazy">')
+      : '<div class="pi-thumb" style="background:var(--lt)"></div>';
+    return '<div class="proj-item' + (i === S.currentIdx ? ' active' : '') +
+      '" draggable="true" data-i="' + i + '">' +
+      '<span class="pi-hdl" title="드래그하여 순서 변경">⠿</span>' +
+      thumbEl +
+      '<div style="min-width:0"><div class="pi-num">' + esc(p.num) + '</div>' +
+      '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(title) + '</div></div></div>';
+  }).join('');
+  document.querySelectorAll('.proj-item').forEach(el => {
+    el.addEventListener('click', () => selectProject(+el.dataset.i));
+    el.addEventListener('dragstart', e => {
+      listDragSrc = +el.dataset.i;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      document.querySelectorAll('.proj-item').forEach(c => c.classList.remove('drag-over'));
+    });
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const dst = +el.dataset.i;
+      if (listDragSrc !== null && listDragSrc !== dst) {
+        const [moved] = S.projects.splice(listDragSrc, 1);
+        S.projects.splice(dst, 0, moved);
+        if (S.currentIdx === listDragSrc) S.currentIdx = dst;
+        else if (S.currentIdx > listDragSrc && S.currentIdx <= dst) S.currentIdx--;
+        else if (S.currentIdx < listDragSrc && S.currentIdx >= dst) S.currentIdx++;
+        renderList();
+      }
+      listDragSrc = null;
+    });
+  });
+}
+
+// ── Select project ─────────────────────────────────────────────────
+function selectProject(idx) {
+  if (S.dirty && S.currentIdx >= 0 && !confirm('저장 안 된 변경사항이 있어요. 이동할까요?')) return;
+  S.currentIdx = idx;
+  S.dirty = false;
+  const d = getData(S.projects[idx]);
+  S.editImages = d.images.map(img => ({ file: img.file, layout: img.layout }));
+  document.getElementById('cLabel').textContent = d.title || S.projects[idx].defaultTitle;
+  document.getElementById('actions').style.display = 'flex';
+  setDot('');
+  renderList();
+  renderEditor();
+  renderPreview();
+}
+
+// ── Merge server data with defaults ───────────────────────────────
+function getData(p) {
+  const s = p.saved || {};
+  return {
+    title:       s.title       !== undefined ? s.title       : p.defaultTitle,
+    year:        s.year        !== undefined ? s.year        : '',
+    category:    s.category    !== undefined ? s.category    : '',
+    client:      s.client      !== undefined ? s.client      : null,
+    scope:       s.scope       !== undefined ? s.scope       : '',
+    description: s.description !== undefined ? s.description : '',
+    images:      s.images      !== undefined ? s.images      : [...p.images.map(f => ({ file: f, layout: 'half' })), ...p.videos.map(f => ({ file: f, layout: 'full' }))].sort((a, b) => a.file.localeCompare(b.file)),
+    video:       s.video       !== undefined ? s.video       : (p.videos[0] || null),
+    thumb:       s.thumb       || (([...p.images, ...p.videos].sort()[0] || '') && p.base + [...p.images, ...p.videos].sort()[0]),
+  };
+}
+
+// ── Read current form state ────────────────────────────────────────
+function getCurrentData() {
+  const p = S.projects[S.currentIdx];
+  const d = getData(p);
+  return {
+    title:       v('fTitle'),
+    year:        v('fYear'),
+    category:    v('fCat'),
+    client:      v('fClient') || null,
+    scope:       v('fScope'),
+    description: v('fDesc'),
+    images:      S.editImages,
+    video:       d.video,
+    thumb:       p.base + (S.editImages[0] ? S.editImages[0].file : ([...p.images, ...p.videos].sort()[0] || '')),
+  };
+}
+
+// ── Editor ─────────────────────────────────────────────────────────
+function renderEditor() {
+  const p = S.projects[S.currentIdx];
+  const d = getData(p);
+  document.getElementById('cScroll').innerHTML =
+    '<div class="meta-sec">' +
+      fRow('Title',       'fTitle', d.title) +
+      fRow('Year',        'fYear',  d.year) +
+      fRow('Category',    'fCat',   d.category) +
+      fRow('Client',      'fClient',d.client || '') +
+      fRow('Scope',       'fScope', d.scope) +
+      fRowTA('Description','fDesc', d.description) +
+    '</div>' +
+    '<div class="img-sec">' +
+      '<div class="img-list-hdr">Images — drag to reorder</div>' +
+      '<div id="imgList"></div>' +
+    '</div>';
+
+  ['fTitle','fYear','fCat','fClient','fScope','fDesc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { markDirty(); renderPreview(); });
+  });
+
+  renderImageList();
+}
+
+function renderImageList() {
+  const p = S.projects[S.currentIdx];
+  const d = getData(p);
+  document.getElementById('imgList').innerHTML =
+    S.editImages.map((img, i) => cardHTML(img, i, p.base)).join('') +
+    (d.video
+      ? '<div class="vid-card"><div class="v-ico">&#9654;</div>' +
+        '<span style="font-size:11px">' + esc(d.video) + '</span>' +
+        '<span style="font-size:9px;color:#999;margin-left:6px">Full width</span></div>'
+      : '');
+
+  document.querySelectorAll('.lb').forEach(btn =>
+    btn.addEventListener('click', () => {
+      const i = +btn.dataset.i, l = btn.dataset.l;
+      S.editImages[i].layout = l;
+      btn.closest('.img-card').querySelectorAll('.lb').forEach(b =>
+        b.classList.toggle('on', b.dataset.l === l));
+      markDirty(); renderPreview();
+    })
+  );
+  setupDrag();
+}
+
+function fRow(label, id, val) {
+  return '<div class="f-row"><label class="f-lbl">' + label + '</label>' +
+    '<input class="f-inp" id="' + id + '" type="text" value="' + esc(val) + '"></div>';
+}
+function fRowTA(label, id, val) {
+  return '<div class="f-row fc"><label class="f-lbl">' + label + '</label>' +
+    '<textarea class="f-ta" id="' + id + '">' + esc(val) + '</textarea></div>';
+}
+function cardHTML(img, i, base) {
+  const l = img.layout || 'half';
+  return '<div class="img-card" draggable="true" data-i="' + i + '">' +
+    '<span class="c-hdl">&#11835;</span>' +
+    (/\.(mp4|mov|webm)$/i.test(img.file)
+      ? '<video class="c-th" src="' + base + img.file + '" muted preload="auto" playsinline></video>'
+      : '<img class="c-th" src="' + base + img.file + '" loading="lazy">') +
+    '<div class="c-inf">' +
+      '<span class="c-nm">' + esc(img.file) + '</span>' +
+      '<div class="lbs">' +
+        '<button class="lb' + (l==='full' ?' on':'') + '" data-i="' + i + '" data-l="full">Full</button>' +
+        '<button class="lb' + (l==='half' ?' on':'') + '" data-i="' + i + '" data-l="half">1/2</button>' +
+        '<button class="lb' + (l==='third'?' on':'') + '" data-i="' + i + '" data-l="third">1/3</button>' +
+      '</div>' +
+    '</div></div>';
+}
+
+// ── Drag & drop ────────────────────────────────────────────────────
+function setupDrag() {
+  document.querySelectorAll('.img-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragSrc = +card.dataset.i;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.img-card').forEach(c => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault(); card.classList.remove('drag-over');
+      const dst = +card.dataset.i;
+      if (dragSrc !== null && dragSrc !== dst) {
+        const [moved] = S.editImages.splice(dragSrc, 1);
+        S.editImages.splice(dst, 0, moved);
+        markDirty(); renderImageList(); renderPreview();
+      }
+      dragSrc = null;
+    });
+  });
+}
+
+// ── Preview ────────────────────────────────────────────────────────
+function renderPreview() {
+  if (S.currentIdx < 0) return;
+  const p     = S.projects[S.currentIdx];
+  const d     = getData(p);
+  const title = v('fTitle') || d.title;
+  const year  = v('fYear')  || d.year;
+  const cat   = v('fCat')   || d.category;
+  const cli   = v('fClient');
+  const scope = v('fScope') || d.scope;
+  const desc  = v('fDesc')  || d.description;
+  const cls   = { full:'pf', half:'ph2', third:'pt' };
+
+  const imgs = S.editImages.map(img => {
+    const isVid = /\.(mp4|mov|webm)$/i.test(img.file);
+    if (isVid) return '<div class="pi pv"><video src="' + p.base + img.file + '" controls playsinline></video></div>';
+    return '<div class="pi ' + (cls[img.layout] || 'ph2') + '"><img src="' + p.base + img.file + '" loading="lazy"></div>';
+  }).join('');
+  const vid = d.video
+    ? '<div class="pi pv"><video src="' + p.base + d.video + '" controls playsinline></video></div>'
+    : '';
+
+  let meta = '';
+  if (year)  meta += pmr('Year',     year);
+  if (cat)   meta += pmr('Category', cat);
+  if (cli)   meta += pmr('Client',   cli);
+  if (scope) meta += pmr('Scope',    scope);
+
+  document.getElementById('pScroll').innerHTML =
+    '<div class="pg">' + imgs + vid + '</div>' +
+    '<div class="pd">' +
+      '<div class="pd-top">' +
+        '<h2 class="pd-name">' + esc(title) + '</h2>' +
+        '<div class="pd-meta">' + meta + '</div>' +
+      '</div>' +
+      (desc ? '<p class="pd-body">' + esc(desc) + '</p>' : '') +
+    '</div>';
+}
+function pmr(k, v2) {
+  return '<div class="pm-r"><span class="pm-k">' + k + '</span><span class="pm-v">' + esc(v2) + '</span></div>';
+}
+
+// ── Generate (one click, server does everything) ──────────────────
+document.getElementById('btnGenerate').addEventListener('click', async () => {
+  if (S.currentIdx < 0) return;
+  const p   = S.projects[S.currentIdx];
+  const btn = document.getElementById('btnGenerate');
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base: p.base, images: p.images.slice(0, 6) }),
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    const gen = j.data;
+    setField('fTitle',  gen.title);
+    setField('fYear',   gen.year);
+    setField('fCat',    gen.category);
+    setField('fClient', gen.client || '');
+    setField('fScope',  gen.scope);
+    setField('fDesc',   gen.description);
+    markDirty();
+    renderPreview();
+    toast('Generated!');
+  } catch (e) {
+    alert('Generate 실패:\n' + e.message);
+  } finally {
+    btn.textContent = '✦ Generate';
+    btn.disabled = false;
+  }
+});
+
+// ── Save ───────────────────────────────────────────────────────────
+document.getElementById('btnSave').addEventListener('click', async () => {
+  if (S.currentIdx < 0) return;
+  const p    = S.projects[S.currentIdx];
+  const data = getCurrentData();
+  try {
+    const res = await fetch('/api/save/' + encodeURIComponent(p.id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    p.saved = data;
+    S.dirty = false;
+    setDot('saved');
+    renderList();
+    toast('Saved');
+  } catch (e) {
+    alert('Save 실패:\n' + e.message);
+  }
+});
+
+// ── Publish → update index.html ────────────────────────────────────
+async function doPublish() {
+  try {
+    const order = S.projects.map(p => p.id);
+    const res = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order }),
+    });
+    const j   = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    const gitStatus = j.git === 'pushed'   ? ' → GitHub pushed ✓'
+                    : j.git === 'nothing to commit' ? ' (no changes)'
+                    : j.git               ? ` ⚠ git: ${j.git}`
+                    : '';
+    toast('Published!' + gitStatus);
+  } catch (e) {
+    alert('Publish 실패:\n' + e.message);
+  }
+}
+document.getElementById('btnPublish').addEventListener('click', doPublish);
+document.getElementById('btnPublishLeft').addEventListener('click', doPublish);
+
+// ── + New Project ──────────────────────────────────────────────────
+document.getElementById('btnNew').addEventListener('click', async () => {
+  const name = prompt('새 프로젝트 폴더 이름\n예) 04_project-name');
+  if (!name || !name.trim()) return;
+  try {
+    const res = await fetch('/api/newproject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    S.projects = j.projects;
+    const newIdx = S.projects.findIndex(p => p.id === j.id);
+    renderList();
+    if (newIdx >= 0) selectProject(newIdx);
+    toast('Project created: ' + j.id);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+});
+
+// ── Helpers ────────────────────────────────────────────────────────
+function markDirty() { S.dirty = true; setDot('dirty'); }
+function setDot(s)   { const d = document.getElementById('sdot'); d.className = 'sdot' + (s ? ' ' + s : ''); }
+function v(id)       { const el = document.getElementById(id); return el ? el.value : ''; }
+function setField(id, val) { const el = document.getElementById(id); if (el && val != null) el.value = String(val); }
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let _toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+loadProjects();
+</script>
+</body>
+</html>

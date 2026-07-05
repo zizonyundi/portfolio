@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>29 Noop House</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --black: #111111;
+            --white: #ffffff;
+            --gray: #999999;
+            --light: #f5f5f5;
+            --gap: 3px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--white);
+            color: var(--black);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── NAV ─── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 28px;
+            mix-blend-mode: normal;
+        }
+
+        nav::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: -1;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--black);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+
+        .nav-back:hover { opacity: 0.4; }
+
+        .nav-back svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gray);
+        }
+
+        /* ─── HEADER ─── */
+        .project-header {
+            padding: 110px 28px 52px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            align-items: end;
+            gap: 40px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            margin-bottom: 3px;
+        }
+
+        .project-title {
+            font-size: clamp(40px, 6vw, 80px);
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            line-height: 0.95;
+            color: var(--black);
+        }
+
+        .project-meta {
+            padding-bottom: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0;
+        }
+
+        .meta-key {
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gray);
+            min-width: 96px;
+        }
+
+        .meta-val {
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            color: var(--black);
+        }
+
+        /* ─── GALLERY ─── */
+        .gallery {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--gap);
+        }
+
+        .item {
+            overflow: hidden;
+            background: var(--light);
+        }
+
+        .item img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .item:hover img {
+            transform: scale(1.025);
+        }
+
+        /* half images: fixed landscape ratio */
+        .item:not(.full) {
+            aspect-ratio: 3 / 2;
+        }
+
+        /* full-width images: natural ratio */
+        .item.full {
+            grid-column: 1 / -1;
+        }
+
+        .item.full img {
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            padding: 40px 28px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            margin-top: var(--gap);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left {
+            font-size: 11px;
+            color: var(--gray);
+            letter-spacing: 0.06em;
+        }
+
+        .footer-right a {
+            text-decoration: none;
+            font-size: 11px;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .footer-right a:hover { color: var(--black); }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 640px) {
+            nav { padding: 18px 20px; }
+
+            .project-header {
+                grid-template-columns: 1fr;
+                padding: 90px 20px 40px;
+                gap: 28px;
+            }
+
+            .gallery {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+
+            .item.full {
+                grid-column: 1;
+            }
+
+            .item:not(.full) {
+                aspect-ratio: 4 / 3;
+            }
+
+            footer { padding: 32px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="../../index.html" class="nav-back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Works
+    </a>
+    <span class="nav-label">29 Noop House</span>
+</nav>
+
+<!-- PROJECT HEADER -->
+<header class="project-header">
+    <h1 class="project-title">29<br>Noop<br>House</h1>
+    <div class="project-meta">
+        <div class="meta-row">
+            <span class="meta-key">Year</span>
+            <span class="meta-val">2024</span>
+        </div>
+        <div class="meta-row">
+            <span class="meta-key">Category</span>
+            <span class="meta-val">Brand Identity</span>
+        </div>
+        <div class="meta-row">
+            <span class="meta-key">Client</span>
+            <span class="meta-val">29 Noop House</span>
+        </div>
+        <div class="meta-row">
+            <span class="meta-key">Scope</span>
+            <span class="meta-val">Visual Identity, Space</span>
+        </div>
+    </div>
+</header>
+
+<!-- GALLERY -->
+<section class="gallery">
+        <div class="item full"><img src="001.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="002.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="003.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="004.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="005.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="006.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="007.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="008.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="009.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="010.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="011.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="012.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="013.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="014.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="015.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="016.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="017.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="018.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="019.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="020.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="021.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="022.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="023.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="024.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="025.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="026.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="027.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="028.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="029.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="030.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="031.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="032.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="033.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="034.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="035.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="036.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="037.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="038.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="039.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="040.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="041.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="042.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="043.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="044.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="045.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="046.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="047.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="048.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="049.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="050.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="051.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="052.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="053.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="054.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="055.jpg" alt="" loading="lazy"></div>
+        <div class="item"><img src="056.jpg" alt="" loading="lazy"></div>
+        <div class="item full"><img src="057.jpg" alt="" loading="lazy"></div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <span class="footer-left">29 Noop House &mdash; Brand Identity</span>
+    <div class="footer-right">
+        <a href="../../index.html">← Back to Works</a>
+    </div>
+</footer>
+
+
+</body>
+</html>

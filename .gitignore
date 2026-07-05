@@ -1,0 +1,6 @@
+_apikey.txt
+_order.json
+.DS_Store
+**/.DS_Store
+*.pyc
+__pycache__/

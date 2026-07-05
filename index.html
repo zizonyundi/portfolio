@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZIZONYUNDI</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --bl: #111;
+    --wh: #fff;
+    --gr: #999;
+    --lt: #e8e8e8;
+    --border: #000;
+    --gap: 3px;
+    --right-margin: 24px;
+}
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Pretendard', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--wh);
+    color: var(--bl);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ── 3-column layout ── */
+.layout { display: flex; height: 100vh; }
+.col {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 0;
+    border-right: 1px solid var(--border);
+}
+.col:last-child { border-right: none; }
+.col-design { flex: 0 0 50%; }
+.col-music  { flex: 0 0 25%; }
+.col-dj     { flex: 0 0 25%; }
+
+/* ── Column header ── */
+.col-hdr {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 20px 0 16px 16px;
+    flex-shrink: 0;
+}
+.col-label {
+    font-family: 'Pretendard', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 64px;
+    font-weight: 400;
+    letter-spacing: -.02em;
+    line-height: 1;
+    color: var(--bl);
+}
+.back-btn {
+    font-size: 28px;
+    font-weight: 300;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--bl);
+    padding: 0;
+    line-height: 1;
+    display: none;
+    transition: opacity .2s;
+    flex-shrink: 0;
+}
+.back-btn:hover { opacity: .4; }
+.col-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.col-body::-webkit-scrollbar { display: none; }
+
+/* ── Design: thumbnail grid ── */
+.design-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 var(--right-margin) 0 0;
+}
+.d-thumb {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--lt);
+}
+.d-thumb img,
+.d-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Slide-up animation ── */
+@keyframes slideUp {
+    from { transform: translateY(32px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+.slide-up { animation: slideUp .35s cubic-bezier(.25,.46,.45,.94) forwards; }
+
+/* ── Design: detail view ── */
+.g-grid { display: flex; flex-wrap: wrap; gap: var(--gap); }
+.g-item { overflow: hidden; }
+.g-item img { display: block; width: 100%; height: auto; }
+.g-item.g-full  { width: 100%; }
+.g-item.g-half  { width: calc(50% - 1.5px); }
+.g-item.g-third { width: calc(33.333% - 2px); }
+.g-item.g-video { width: 100%; background: #000; }
+.g-item.g-video video { display: block; width: 100%; height: auto; max-height: 70vh; }
+
+.proj-info { padding: 36px 20px 72px; }
+.proj-title {
+    font-family: 'Pretendard', 'Helvetica Neue', Arial, sans-serif;
+    font-size: clamp(22px, 2.8vw, 44px);
+    font-weight: 300;
+    letter-spacing: -.025em;
+    line-height: 1;
+    margin-bottom: 24px;
+}
+.meta-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+.m-row { display: flex; align-items: baseline; }
+.m-key {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--gr);
+    min-width: 72px;
+    flex-shrink: 0;
+}
+.m-val { font-size: 12px; }
+.proj-desc-body { font-size: 13px; line-height: 1.75; color: #555; }
+
+/* ── Music tracks ── */
+.m-track {
+    cursor: pointer;
+    padding-right: var(--right-margin);
+    margin-bottom: 12px;
+}
+.m-thumb-wrap {
+    aspect-ratio: 1 / 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--lt);
+}
+.m-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.m-overlay {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s;
+}
+.m-track:hover .m-overlay { background: rgba(0,0,0,.28); }
+.m-track.playing .m-overlay { background: rgba(0,0,0,.42); }
+.m-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity .2s;
+}
+.m-track:hover .m-icon { opacity: 1; }
+.m-track.playing .m-icon { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- ── BRAND DESIGNER 50% ── -->
+    <div class="col col-design">
+        <div class="col-hdr">
+            <button class="back-btn" id="back-btn">←</button>
+            <a class="col-label" id="design-label" href="https://www.linkedin.com/in/jiyeon-yun-491451174/" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">Brand Designer</a>
+        </div>
+        <div class="col-body" id="design-body"></div>
+    </div>
+
+    <!-- ── GUITARIST 25% ── -->
+    <div class="col col-music">
+        <div class="col-hdr">
+            <span class="col-label">guitarist..?</span>
+        </div>
+        <div class="col-body" id="music-body"></div>
+    </div>
+
+    <!-- ── DJ 25% ── -->
+    <div class="col col-dj">
+        <div class="col-hdr">
+            <span class="col-label">dj..?</span>
+        </div>
+        <div class="col-body" id="dj-body"></div>
+    </div>
+
+</div>
+
+<!-- Hidden players -->
+<div id="yt-players"
+     style="position:fixed;bottom:0;right:0;width:1px;height:1px;overflow:hidden;opacity:.001;pointer-events:none;"></div>
+<div id="sc-players"
+     style="position:fixed;bottom:0;right:0;width:1px;height:1px;overflow:hidden;opacity:.001;pointer-events:none;"></div>
+
+<script>
+/* PORTFOLIO-DATA:START */
+const PROJECTS = [
+    {
+        "num": "01",
+        "title": "29 NOOP HOUSE",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/01_29 NOOP HOUSE/000.jpg",
+        "base": "00_works/01_29 NOOP HOUSE/",
+        "video": null,
+        "images": [
+            {
+                "file": "000.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "001.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "002.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "003.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "004.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "005.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "006.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "007.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "008.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "009.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "010.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "011.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "012.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "013.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "015.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "016.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "014.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "017.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "018.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "020.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "019.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "021.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "022.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "023.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "024.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "025.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "026.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "027.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "028.jpg",
+                "layout": "half"
+            }
+        ]
+    },
+    {
+        "num": "06",
+        "title": "29 WINTER MARKET",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/06_29 WINTER MARKET/00.jpg",
+        "base": "00_works/06_29 WINTER MARKET/",
+        "video": "001.mp4",
+        "images": [
+            {
+                "file": "00.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "001.mp4",
+                "layout": "full"
+            },
+            {
+                "file": "002.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "003.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "004.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "005.PNG",
+                "layout": "half"
+            }
+        ]
+    },
+    {
+        "num": "04",
+        "title": "666 PARTY no1",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/04_666 PARTY no1/001.mp4",
+        "base": "00_works/04_666 PARTY no1/",
+        "video": "001.mp4",
+        "images": [
+            {
+                "file": "001.mp4",
+                "layout": "full"
+            },
+            {
+                "file": "002.mp4",
+                "layout": "full"
+            },
+            {
+                "file": "003.mp4",
+                "layout": "full"
+            }
+        ]
+    },
+    {
+        "num": "03",
+        "title": "2023 NEW YEARS CARD",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/03_2023 NEW YEARS CARD/00.mp4",
+        "base": "00_works/03_2023 NEW YEARS CARD/",
+        "video": "00.mp4",
+        "images": [
+            {
+                "file": "00.mp4",
+                "layout": "full"
+            },
+            {
+                "file": "01.jpg",
+                "layout": "full"
+            }
+        ]
+    },
+    {
+        "num": "05",
+        "title": "Annual Signature",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/05_Annual Signature/00.jpg",
+        "base": "00_works/05_Annual Signature/",
+        "video": null,
+        "images": [
+            {
+                "file": "00.jpg",
+                "layout": "full"
+            },
+            {
+                "file": "000.png",
+                "layout": "full"
+            },
+            {
+                "file": "001.png",
+                "layout": "full"
+            },
+            {
+                "file": "002.png",
+                "layout": "full"
+            },
+            {
+                "file": "003.png",
+                "layout": "full"
+            },
+            {
+                "file": "004.png",
+                "layout": "full"
+            },
+            {
+                "file": "005.png",
+                "layout": "full"
+            },
+            {
+                "file": "006.png",
+                "layout": "full"
+            },
+            {
+                "file": "007.png",
+                "layout": "full"
+            },
+            {
+                "file": "008.png",
+                "layout": "full"
+            },
+            {
+                "file": "009.png",
+                "layout": "full"
+            },
+            {
+                "file": "010.png",
+                "layout": "full"
+            },
+            {
+                "file": "011.png",
+                "layout": "full"
+            }
+        ]
+    },
+    {
+        "num": "02",
+        "title": "666 PARTY no2",
+        "year": "",
+        "category": "",
+        "client": null,
+        "scope": "",
+        "description": "",
+        "thumb": "00_works/02_666 PARTY no2/000.png",
+        "base": "00_works/02_666 PARTY no2/",
+        "video": "01.mov",
+        "images": [
+            {
+                "file": "000.png",
+                "layout": "half"
+            },
+            {
+                "file": "0000.png",
+                "layout": "half"
+            },
+            {
+                "file": "01.mov",
+                "layout": "full"
+            },
+            {
+                "file": "02.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "03.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "04.jpg",
+                "layout": "half"
+            },
+            {
+                "file": "05.jpg",
+                "layout": "half"
+            }
+        ]
+    }
+];
+/* PORTFOLIO-DATA:END */
+
+// ════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════
+function isVideo(filename) {
+    return /\.(mp4|mov|webm)$/i.test(filename);
+}
+
+function esc(s) {
+    if (!s) return '';
+    return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════
+// DESIGN COLUMN
+// ════════════════════════════════════════════════════
+document.getElementById('back-btn').addEventListener('click', showDesignGrid);
+
+function thumbMediaHTML(p, i) {
+    if (isVideo(p.thumb)) {
+        return '<div class="d-thumb" data-i="' + i + '">' +
+               '<video src="' + p.thumb + '" autoplay muted loop playsinline></video>' +
+               '</div>';
+    }
+    return '<div class="d-thumb" data-i="' + i + '">' +
+           '<img src="' + p.thumb + '" alt="' + esc(p.title) + '" loading="lazy">' +
+           '</div>';
+}
+
+function showDesignGrid() {
+    document.getElementById('back-btn').style.display = 'none';
+    document.getElementById('design-label').textContent = 'Brand Designer';
+    const body = document.getElementById('design-body');
+    body.innerHTML =
+        '<div class="design-grid">' +
+        PROJECTS.map((p, i) => thumbMediaHTML(p, i)).join('') +
+        '</div>';
+    body.querySelectorAll('.d-thumb').forEach(el =>
+        el.addEventListener('click', () => showDesignDetail(+el.dataset.i)));
+    body.scrollTop = 0;
+}
+
+function galleryItemHTML(img, base) {
+    if (isVideo(img.file)) {
+        return '<div class="g-item g-video">' +
+               '<video src="' + base + img.file + '" controls playsinline></video></div>';
+    }
+    return '<div class="g-item g-' + (img.layout || 'half') + '">' +
+           '<img src="' + base + img.file + '" loading="lazy"></div>';
+}
+
+function showDesignDetail(i) {
+    const p = PROJECTS[i];
+    document.getElementById('back-btn').style.display = 'block';
+    document.getElementById('design-label').textContent = p.title;
+    const body = document.getElementById('design-body');
+
+    const gallery = p.images.map(img => galleryItemHTML(img, p.base)).join('');
+
+    let meta = '<div class="m-row"><span class="m-key">Year</span><span class="m-val">' + esc(p.year) + '</span></div>';
+    meta += '<div class="m-row"><span class="m-key">Category</span><span class="m-val">' + esc(p.category) + '</span></div>';
+    if (p.client) meta += '<div class="m-row"><span class="m-key">Client</span><span class="m-val">' + esc(p.client) + '</span></div>';
+    meta += '<div class="m-row"><span class="m-key">Scope</span><span class="m-val">' + esc(p.scope) + '</span></div>';
+
+    body.innerHTML =
+        '<div class="slide-up">' +
+            '<div class="g-grid">' + gallery + '</div>' +
+            '<div class="proj-info">' +
+                '<h2 class="proj-title">' + esc(p.title) + '</h2>' +
+                '<div class="meta-list">' + meta + '</div>' +
+                (p.description ? '<p class="proj-desc-body">' + esc(p.description) + '</p>' : '') +
+            '</div>' +
+        '</div>';
+    body.scrollTop = 0;
+}
+
+// ════════════════════════════════════════════════════
+// YOUTUBE
+// ════════════════════════════════════════════════════
+const YT_TRACKS = [
+    { id: 'MBx2TafNIGU', thumb: '01_music/[666]RockRockRock_cover.jpg' },
+    { id: '64WXfPK_BMk', thumb: '01_music/[666]부활(helena)_cover.jpg' },
+];
+
+let ytPlayers = {};
+let ytCurrent = null;
+
+function renderYT() {
+    document.getElementById('music-body').innerHTML = YT_TRACKS.map(t =>
+        '<div class="m-track" data-ytid="' + t.id + '">' +
+            '<div class="m-thumb-wrap">' +
+                '<img src="' + t.thumb + '" alt="">' +
+                '<div class="m-overlay">' +
+                    '<div class="m-icon" id="yt-icon-' + t.id + '">&#9654;</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>'
+    ).join('');
+    document.querySelectorAll('[data-ytid]').forEach(el =>
+        el.addEventListener('click', () => toggleYT(el.dataset.ytid)));
+}
+
+window.onYouTubeIframeAPIReady = function() {
+    YT_TRACKS.forEach(t => {
+        const div = document.createElement('div');
+        div.id = 'yt-p-' + t.id;
+        document.getElementById('yt-players').appendChild(div);
+        ytPlayers[t.id] = new YT.Player('yt-p-' + t.id, {
+            width: 1, height: 1,
+            videoId: t.id,
+            playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0 },
+        });
+    });
+};
+
+function stopYT() {
+    if (ytCurrent) {
+        const p = ytPlayers[ytCurrent];
+        if (p && p.pauseVideo) p.pauseVideo();
+        const el = document.querySelector('[data-ytid="' + ytCurrent + '"]');
+        if (el) el.classList.remove('playing');
+        const icon = document.getElementById('yt-icon-' + ytCurrent);
+        if (icon) icon.innerHTML = '&#9654;';
+        ytCurrent = null;
+    }
+}
+
+function toggleYT(id) {
+    const wasPlaying = ytCurrent === id;
+    stopYT();
+    stopSC();
+    if (!wasPlaying) {
+        const p = ytPlayers[id];
+        if (p && p.playVideo) {
+            p.playVideo();
+            const el = document.querySelector('[data-ytid="' + id + '"]');
+            if (el) el.classList.add('playing');
+            const icon = document.getElementById('yt-icon-' + id);
+            if (icon) icon.innerHTML = '&#9646;&#9646;';
+            ytCurrent = id;
+        }
+    }
+}
+
+// ════════════════════════════════════════════════════
+// SOUNDCLOUD
+// ════════════════════════════════════════════════════
+const SC_TRACKS = [
+    'https://soundcloud.com/zizonyundi/buddhas-birthday-hard-rock',
+    'https://soundcloud.com/zizonyundi/boss-bitch-mix-l-d-d-p',
+    'https://soundcloud.com/zizonyundi/korean-funkcitypop-mix',
+    'https://soundcloud.com/zizonyundi/39105e2b-4a71-4e94-8062-6654f37474fc',
+];
+
+let scWidgets = [];
+let scCurrent = null;
+
+function renderSC() {
+    document.getElementById('dj-body').innerHTML = SC_TRACKS.map((_, i) =>
+        '<div class="m-track" id="sc-track-' + i + '" data-sci="' + i + '">' +
+            '<div class="m-thumb-wrap">' +
+                '<img src="" alt="" style="opacity:0;transition:opacity .3s;">' +
+                '<div class="m-overlay">' +
+                    '<div class="m-icon" id="sc-icon-' + i + '">&#9654;</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>'
+    ).join('');
+    document.querySelectorAll('[data-sci]').forEach(el =>
+        el.addEventListener('click', () => toggleSC(+el.dataset.sci)));
+}
+
+function initSC() {
+    SC_TRACKS.forEach((url, i) => {
+        const iframe = document.createElement('iframe');
+        iframe.id = 'sc-p-' + i;
+        iframe.allow = 'autoplay';
+        iframe.src = 'https://w.soundcloud.com/player/?url=' + encodeURIComponent(url) +
+            '&auto_play=false&hide_related=true&show_comments=false' +
+            '&show_user=false&show_reposts=false&show_teaser=false';
+        document.getElementById('sc-players').appendChild(iframe);
+
+        const widget = SC.Widget(iframe);
+        scWidgets[i] = widget;
+
+        widget.bind(SC.Widget.Events.READY, () => {
+            widget.getCurrentSound(sound => {
+                if (!sound) return;
+                const art = (
+                    (sound.artwork_url || '').replace('-large', '-t500x500') ||
+                    ((sound.user || {}).avatar_url || '').replace('-large', '-t500x500')
+                );
+                const imgEl = document.querySelector('#sc-track-' + i + ' img');
+                if (imgEl && art) { imgEl.src = art; imgEl.style.opacity = '1'; }
+            });
+        });
+
+        widget.bind(SC.Widget.Events.FINISH, () => {
+            if (scCurrent === i) {
+                document.getElementById('sc-track-' + i).classList.remove('playing');
+                document.getElementById('sc-icon-' + i).innerHTML = '&#9654;';
+                scCurrent = null;
+            }
+        });
+    });
+}
+
+function stopSC() {
+    if (scCurrent !== null) {
+        scWidgets[scCurrent].pause();
+        document.getElementById('sc-track-' + scCurrent).classList.remove('playing');
+        document.getElementById('sc-icon-' + scCurrent).innerHTML = '&#9654;';
+        scCurrent = null;
+    }
+}
+
+function toggleSC(i) {
+    const wasPlaying = scCurrent === i;
+    stopSC();
+    stopYT();
+    if (!wasPlaying) {
+        scWidgets[i].play();
+        document.getElementById('sc-track-' + i).classList.add('playing');
+        document.getElementById('sc-icon-' + i).innerHTML = '&#9646;&#9646;';
+        scCurrent = i;
+    }
+}
+
+// ════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════
+showDesignGrid();
+renderYT();
+renderSC();
+</script>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="https://w.soundcloud.com/player/api.js" onload="initSC()"></script>
+
+</body>
+</html>
