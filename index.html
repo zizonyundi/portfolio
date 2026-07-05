@@ -181,6 +181,25 @@ html, body {
 }
 .m-track:hover .m-icon { opacity: 1; }
 .m-track.playing .m-icon { opacity: 1; }
+.m-title {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: #ffffff;
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 6px;
+    max-width: calc(100% - 24px);
+    white-space: normal;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity .2s;
+    pointer-events: none;
+}
+.m-track:hover .m-title { opacity: 1; }
+.m-track.playing .m-title { opacity: 1; }
 </style>
 </head>
 <body>
@@ -631,8 +650,8 @@ function showDesignDetail(i) {
 // YOUTUBE
 // ════════════════════════════════════════════════════
 const YT_TRACKS = [
-    { id: 'MBx2TafNIGU', thumb: '01_music/[666]RockRockRock_cover.jpg' },
-    { id: '64WXfPK_BMk', thumb: '01_music/[666]부활(helena)_cover.jpg' },
+    { id: 'MBx2TafNIGU', thumb: '01_music/[666]RockRockRock_cover.jpg', title: '[666] Rock Rock Rock' },
+    { id: '64WXfPK_BMk', thumb: '01_music/[666]부활(helena)_cover.jpg',  title: '[666] 부활 (helena)' },
 ];
 
 let ytPlayers = {};
@@ -646,6 +665,7 @@ function renderYT() {
                 '<div class="m-overlay">' +
                     '<div class="m-icon" id="yt-icon-' + t.id + '">&#9654;</div>' +
                 '</div>' +
+                '<div class="m-title">' + esc(t.title) + '</div>' +
             '</div>' +
         '</div>'
     ).join('');
@@ -716,6 +736,7 @@ function renderSC() {
                 '<div class="m-overlay">' +
                     '<div class="m-icon" id="sc-icon-' + i + '">&#9654;</div>' +
                 '</div>' +
+                '<div class="m-title" id="sc-title-' + i + '"></div>' +
             '</div>' +
         '</div>'
     ).join('');
@@ -745,6 +766,8 @@ function initSC() {
                 );
                 const imgEl = document.querySelector('#sc-track-' + i + ' img');
                 if (imgEl && art) { imgEl.src = art; imgEl.style.opacity = '1'; }
+                const titleEl = document.getElementById('sc-title-' + i);
+                if (titleEl && sound.title) titleEl.textContent = sound.title;
             });
         });
 
